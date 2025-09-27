@@ -3,3 +3,7 @@ build/
 .vscode/
 
 .DS_store
+
+bin/
+
+lib/
