@@ -1,4 +1,4 @@
-#include "../include/Timestamp.h"
+#include "Timestamp.h"
 #include<time.h>
 
 Timestamp::Timestamp():microSecondsSinceEpoch_(0)

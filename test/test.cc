@@ -1,5 +1,6 @@
 #include<iostream>
 #include"test_Timestamp.h"
+#include"test_Logger.h"
 
 // #if defined(__linux__)
 //     #include<sys/epoll.h>
@@ -9,7 +10,7 @@
 
 int main(){
     test_Timestamp();
-
+    test_logger();
 
     return 0;
 }
