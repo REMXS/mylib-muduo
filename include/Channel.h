@@ -39,7 +39,7 @@ private:
     //handleEvent的内部执行的函数
     void handleEventWithGuard(Timestamp receive_time);
 public:
-    Channel(/* args */);
+    Channel(EventLoop*loop,int fd);
     ~Channel();
    
     //在poller中的fd得到通知，则调用此函数处理事件
