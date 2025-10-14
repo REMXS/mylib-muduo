@@ -27,6 +27,7 @@
     } while (0);                                            \
 
 
+//发生错误，记录并退出程序
 #define LOG_FATAL(logmsgFormat,...)                         \
     do                                                      \
     {                                                       \
@@ -35,6 +36,7 @@
         char buffer[1024]={0};                              \
         snprintf(buffer,1024,logmsgFormat,##__VA_ARGS__);   \
         logger.log(buffer);                                 \
+        exit(-1);                                           \
     } while (0);                                            \
 
 

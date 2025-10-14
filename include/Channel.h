@@ -66,7 +66,7 @@ public:
     void tie(const std::shared_ptr<void>&sp);
 
 
-    //设置fd对应的事件，效果相当于event_ctl 中的add，del
+    //设置fd对应的事件，使poller对象监听对应的事件，效果相当于event_ctl 中的add，del
     void enableReading(){this->events_|=kReadEvent;update();}
     void disableReading(){this->events_&=~kReadEvent;update();}
     void enableWriting(){this->events_|=kWriteEvent;update();}

@@ -42,7 +42,7 @@ private:
     //用于跨线程唤醒操作
     int wakeup_fd_;
     //当主loop有新注册的channel时，唤醒子loop添加新的channel
-    std::unique_ptr<Channel*>wakeup_channel;
+    std::unique_ptr<Channel>wakeup_channel;
     //等待被执行的任务队列
     std::vector<Functor>pendingFunctors_;
     //此loop是否在执行任务队列中任务的标志
