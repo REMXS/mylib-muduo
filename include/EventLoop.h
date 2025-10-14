@@ -36,7 +36,7 @@ private:
     //每次循环调用poller时的时间点
     Timestamp pollReturnTime_; 
 
-    std::unique_ptr<Poller>poller;
+    std::unique_ptr<Poller>poller_;
 
 
     //用于跨线程唤醒操作

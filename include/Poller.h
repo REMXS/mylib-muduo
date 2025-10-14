@@ -27,8 +27,9 @@ public:
     //判断poller中是否含有指定的channel
     bool hasChannel(Channel* channel);
 
-    //更新删除channel
+    //更新channel
     virtual void updateChannel(Channel* channel)=0;
+    //删除channel
     virtual void removeChannel(Channel* channel)=0;
 
     //一次事件循环

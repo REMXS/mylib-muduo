@@ -18,7 +18,7 @@ private:
     static const int kReadEvent;
     static const int kWriteEvent;
 
-    EventLoop *loop; //channel 所在的loop
+    EventLoop *loop_; //channel 所在的loop
     const int fd_; //channel 绑定的fd
     int events_; //注册fd所有感兴趣的事件
     int revent_;//当前循环实际返回的事件
@@ -63,7 +63,7 @@ public:
 
 
     //在channel绑定上层的tcp connection时调用
-    void tie(std::shared_ptr<void>&sp);
+    void tie(const std::shared_ptr<void>&sp);
 
 
     //设置fd对应的事件，效果相当于event_ctl 中的add，del
@@ -78,7 +78,7 @@ public:
     bool isWriting(){return this->events_&kWriteEvent;}
     bool isNoneEvent(){return this->events_==kNoneEvent;}
 
-    EventLoop* ownerLoop(){return this->loop;}
+    EventLoop* ownerLoop(){return this->loop_;}
     void remove();
 
 };
