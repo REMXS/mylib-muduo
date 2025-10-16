@@ -22,7 +22,7 @@ private:
 
     //给wakeupfd注册的读处理函数，清空eventfd的计数代表了响应了此次请求
     void handleRead();
-    //在每次循环结束的时候，执行任务队列中的额外任务，任务多位上层回调
+    //在每次循环结束的时候，执行任务队列中的额外任务，任务多为上层回调
     void doingPendingFunctors();
 
     ChannelLists active_channels;
@@ -43,7 +43,7 @@ private:
     int wakeup_fd_;
     //当主loop有新注册的channel时，唤醒子loop添加新的channel
     std::unique_ptr<Channel>wakeup_channel;
-    //等待被执行的任务队列
+    //等待被执行的任务队列,访问此变量时需要加锁
     std::vector<Functor>pendingFunctors_;
     //此loop是否在执行任务队列中任务的标志
     std::atomic_bool calling_pending_functors_;
