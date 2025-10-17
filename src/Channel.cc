@@ -77,7 +77,7 @@ void Channel::handleEventWithGuard(Timestamp receive_time)
         }
     }
     //读
-    else if(this->revent_&(EPOLLIN|EPOLLPRI))
+    if(this->revent_&(EPOLLIN|EPOLLPRI))
     {
         if(this->read_callback_)
         {
@@ -85,7 +85,7 @@ void Channel::handleEventWithGuard(Timestamp receive_time)
         }
     }
     //写
-    else if(this->revent_&EPOLLOUT)
+    if(this->revent_&EPOLLOUT)
     {
         if(this->write_callback_)
         {
@@ -93,7 +93,7 @@ void Channel::handleEventWithGuard(Timestamp receive_time)
         }
     }
     //错误
-    else if(this->revent_&EPOLLERR)
+    if(this->revent_&EPOLLERR)
     {
         if(this->error_callback_)
         {

@@ -7,7 +7,7 @@ class noncopyable
 public:
     noncopyable& operator=(const noncopyable&other)=delete;
     noncopyable(const noncopyable&other)=delete;
-protected: //设置为protected 确保此类不会被单独示例化
+protected: //设置为protected 确保此类不会被单独实例化
     noncopyable()=default;
     ~noncopyable()=default;
 };
