@@ -1,6 +1,7 @@
 #include<stdlib.h>
 
 #include"Poller.h"
+#include"EPollPoller.h"
 
 //静态工厂函数的实现
 Poller* Poller::newDefaultPoller(EventLoop*loop)
@@ -11,6 +12,6 @@ Poller* Poller::newDefaultPoller(EventLoop*loop)
     }
     else
     {
-        return nullptr;
+        return new EPollPoller(loop);
     }
 }

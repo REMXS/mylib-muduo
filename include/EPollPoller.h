@@ -11,7 +11,8 @@ class EPollPoller:public Poller
 {
 private:
     using EventList = std::vector<epoll_event>;
-    static const int kEpollEventListSize=32;
+
+    static const int kEpollEventListSize=16;
     
 
     EventList event_list_;//用于装载epoll_wait返回的epoll_event集合
@@ -23,7 +24,7 @@ private:
     void update(int operation,Channel*channel);
 
     //将event_list_中的内容填充到一个一个的channel中
-    void fillActiveChannels(ChannelList *active_channels) const;
+    void fillActiveChannels(int num_events,ChannelList *active_channels) const;
     
 public:
     EPollPoller(EventLoop* loop);

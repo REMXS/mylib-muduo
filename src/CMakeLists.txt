@@ -5,3 +5,7 @@ aux_source_directory(./ SRC)
 add_library(mylib_copy_muduo SHARED ${SRC})
 
 target_include_directories(mylib_copy_muduo PUBLIC ${PROJECT_SOURCE_DIR}/include)
+
+target_compile_definitions(mylib_copy_muduo PRIVATE
+    $<$<CONFIG:Debug>:MUDEBUG>
+)

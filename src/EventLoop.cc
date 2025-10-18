@@ -32,6 +32,7 @@ int createEventFd()
     {
         LOG_FATAL("failed to create eventfd,errno: %d",errno)
     }
+    LOG_DEBUG("successed to create eventfd %d",evtfd)
     return evtfd;
 }
 
@@ -44,9 +45,9 @@ EventLoop::EventLoop()
     ,wakeup_fd_(createEventFd())
     ,wakeup_channel(std::make_unique<Channel>(this,wakeup_fd_))
 {
-    LOG_DEBUG("EventLoop created %p in thread %d\n", this, this->thread_id_);
+    LOG_DEBUG("EventLoop created %p in thread %d", this, this->thread_id_);
 
-    //遵循一个线程一个循环的设计规则,如果t_loopInThisThread不为空，则当前线程已有一个实例
+    //遵循一个线程一个循环的设计规则,如果t_loopInThisThread不为空，说明当前线程已有一个实例
     if(t_loopInThisThread)
     {
         LOG_FATAL("another eventLoop %p already exists in this thread %d",t_loopInThisThread,this->thread_id_)
@@ -170,7 +171,7 @@ void EventLoop::loop()
     this->looping_=true;
     this->quit_=false;
 
-    LOG_INFO("EventLoop %p start looping\n", this);
+    LOG_INFO("EventLoop %p start looping", this);
     while(!quit_)
     {
         //先清空上次残留在active_channels的任务
@@ -186,7 +187,7 @@ void EventLoop::loop()
         this->doingPendingFunctors();
     }
     looping_=false;
-    LOG_INFO("EventLoop %p stop looping\n", this);
+    LOG_INFO("EventLoop %p stop looping", this);
 }
 
 /**

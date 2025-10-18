@@ -34,13 +34,16 @@ void EPollPoller::updateChannel(Channel* channel)
 {
     int idx=channel->index();
     int cfd=channel->fd();
+    
+    LOG_DEBUG("func=%s => fd=%d events=%d index=%d", __FUNCTION__, channel->fd(), channel->events(), idx);
+
     //channel不在epoll中被监听
     if(idx==kNew||idx==kDelete)
     {
         //防止新加入epoll或者暂停监听的channel忘记设置监听事件
         if(channel->isNoneEvent())
         {
-            LOG_ERROR("updateChannel: fd %d forgot to add events, failed to update channel",cfd)
+            LOG_ERROR("EPollPoller::updateChannel: fd %d forgot to add events, failed to update channel",cfd)
             return;
         }
 
@@ -81,7 +84,7 @@ void EPollPoller::removeChannel(Channel* channel)
 
     if(idx==kNew) return;
 
-    
+    LOG_INFO("func=%s => fd=%d", __FUNCTION__, fd);
     this->channels_.erase(fd);//清除登记信息
 
     //如果channel在epoll中，清除epoll中的channel
@@ -96,17 +99,19 @@ void EPollPoller::removeChannel(Channel* channel)
 //一次epoll wait 循环
 Timestamp EPollPoller::poll(int time_out,ChannelList*active_channels)
 {
+    LOG_DEBUG("func=%s => fd total count:%lu", __FUNCTION__, channels_.size());
+
     int num_events= epoll_wait(this->epoll_fd_,&*this->event_list_.begin(),static_cast<int>(event_list_.size()),time_out);
     Timestamp st=Timestamp::now();
 
     if(num_events>0)
     {   
         LOG_DEBUG("%d events happend",num_events)
-        fillActiveChannels(active_channels);
+        fillActiveChannels(num_events,active_channels);
     }
     else if(num_events==0)
     {
-        LOG_DEBUG("%s time out ! \n",__FUNCTION__)
+        LOG_DEBUG("%s time out ! ",__FUNCTION__)
     }
     else
     {
@@ -144,12 +149,12 @@ void EPollPoller::update(int operation,Channel*channel)
 }
 
 //填写活跃的链接
-void EPollPoller::fillActiveChannels(ChannelList *active_channels) const
+void EPollPoller::fillActiveChannels(int num_events,ChannelList *active_channels) const
 {
-    for(const auto&event:event_list_)
+    for(int i=0;i<num_events;++i)
     {
-        Channel* channel=static_cast<Channel*>(event.data.ptr);
-        channel->set_revent(event.events);
+        Channel* channel=static_cast<Channel*>(event_list_[i].data.ptr);
+        channel->set_revent(event_list_[i].events);
         active_channels->emplace_back(channel);
     }
 }

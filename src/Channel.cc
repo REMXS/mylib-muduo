@@ -64,7 +64,7 @@ void Channel::handleEvent(Timestamp receive_time)
 
 void Channel::handleEventWithGuard(Timestamp receive_time)
 {
-    LOG_INFO("channel handleEvent revents:%d\n",this->revent_);
+    LOG_INFO("channel handleEvent revents:%d",this->revent_);
 
     //根据实际返回的真实的事件调用不同的回调函数
     

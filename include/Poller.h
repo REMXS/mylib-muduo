@@ -16,7 +16,6 @@ public:
 private:
     EventLoop*loop_;
     
-
 protected:
     using ChannelMap=std::unordered_map<int,Channel*>;
     ChannelMap channels_;
@@ -33,7 +32,7 @@ public:
     virtual void removeChannel(Channel* channel)=0;
 
     //一次事件循环
-    virtual Timestamp poll(int time_out,ChannelList*clist)=0;
+    virtual Timestamp poll(int time_out,ChannelList*active_channels)=0;
 
 
     Poller(EventLoop*loop);
