@@ -1,6 +1,7 @@
 #include<iostream>
+#include<gtest/gtest.h>
 
-#include"test_EventLoop.h"
+#include"test_Thread.h"
 
 // #if defined(__linux__)
 //     #include<sys/epoll.h>
@@ -9,9 +10,10 @@
 // #endif
 
 
-int main(){
-    testEventloop();
+int main(int argc,char**argv){
+    test_thread();
+    ::testing::InitGoogleTest(&argc,argv);
 
 
-    return 0;
+    return RUN_ALL_TESTS();
 }
