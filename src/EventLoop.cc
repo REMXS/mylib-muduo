@@ -168,6 +168,8 @@ void EventLoop::queueInLoop(Functor cb)
 
 void EventLoop::loop()
 {
+    if(quit_) return;
+
     this->looping_=true;
     this->quit_=false;
 

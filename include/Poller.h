@@ -36,7 +36,7 @@ public:
 
 
     Poller(EventLoop*loop);
-    ~Poller()=default;
+    virtual ~Poller()=default;
 };
 
 

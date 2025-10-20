@@ -51,7 +51,5 @@ void test_thread()
     auto fu=std::move(test_thread_func());
     fu.wait();
     ThreadDeathTest_JoinBeforeStart_Test tj;
-    
-    
 
 }

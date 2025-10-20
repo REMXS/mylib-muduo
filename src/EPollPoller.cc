@@ -7,6 +7,7 @@
 #include"EPollPoller.h"
 #include"Channel.h"
 #include"Logger.h"
+#include"CurrentThread.h"
 
 //以下为channel中index中的值的含义
 const int kNew=-1; //表示channel还没添加到channel中
@@ -111,7 +112,7 @@ Timestamp EPollPoller::poll(int time_out,ChannelList*active_channels)
     }
     else if(num_events==0)
     {
-        LOG_DEBUG("%s time out ! ",__FUNCTION__)
+        LOG_DEBUG("%s time out ! thread: %d",__FUNCTION__,CurrentThread::tid())
     }
     else
     {

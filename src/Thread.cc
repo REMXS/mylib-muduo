@@ -29,6 +29,7 @@ void Thread::setDefaultName()
 {
     int num=++num_created;
 
+    //如果没有名字才使用默认名字，如果有就直接返回就可以了
     if(name_.empty())
     {
         char buf[32]={0};

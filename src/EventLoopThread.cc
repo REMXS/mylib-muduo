@@ -2,7 +2,7 @@
 
 
 #include"EventLoopThread.h"
-
+#include"EventLoop.h"
 
 EventLoopThread::EventLoopThread(const ThreadInitCallback&cb,const std::string&name)
     :thread_(nullptr)
@@ -35,6 +35,7 @@ void EventLoopThread::ThreadFunc()
         call_back_(&loop);
     }
 
+    //如果当前的线程没有结束，则通知线程对象创建loop成功，否则直接退出线程
     if(!exiting_)
     {
         std::lock_guard<std::mutex>lock(mtx_);

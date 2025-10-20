@@ -8,10 +8,9 @@
 #include<condition_variable>
 
 #include"Thread.h"
-#include"EventLoop.h"
 #include"noncopyable.h"
 
-
+class EventLoop;
 
 class EventLoopThread:noncopyable
 {
@@ -33,6 +32,7 @@ private:
 
 public:
     EventLoop* startLoop();//因为主eventloop在分发连接的时候需要调用其它loop中的wakeup函数，所以主loop需要知道其它loop对象
+    
 
 
     EventLoopThread(const ThreadInitCallback&cb,const std::string&name="");
