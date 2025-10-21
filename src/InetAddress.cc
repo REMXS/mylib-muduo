@@ -2,7 +2,7 @@
 
 #include"InetAddress.h"
 
-InetAddress::InetAddress(std::string ip,uint16_t port)
+InetAddress::InetAddress(uint16_t port,std::string ip)
 {
     memset(&addr_,0,sizeof(addr_));
     addr_.sin_family=AF_INET;
@@ -45,8 +45,12 @@ uint16_t InetAddress::toPort()const
     return ntohs(addr_.sin_port);
 }
 
-
-sockaddr_in* InetAddress::getSockAddr()
+/* 
+在 const 成员函数中，成员变量的指针不会“自动加上 const 修饰”，
+但由于 this 指针是 const T*，通过 this 访问的成员变量指针会
+被推导为指向 const 的指针类型。
+*/
+const sockaddr_in* InetAddress::getSockAddr()const
 {
     return &addr_;
 }

@@ -129,7 +129,7 @@ TEST_F(EventLoopThreadPoolTest, MultiThreadMode) {
     loop3->quit();
 }
 
-
+//测试mainloop通过eventfd通知subloop
 TEST_F(EventLoopThreadPoolTest, MultiThreadMode_EventFdNotice)
 {
     LOG_INFO("thread id :%d",CurrentThread::tid())

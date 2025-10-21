@@ -11,7 +11,7 @@ private:
     sockaddr_in addr_;
 
 public:
-    explicit InetAddress(std::string ip="127.0.0.1",uint16_t port=0);
+    explicit InetAddress(uint16_t port=0,std::string ip="127.0.0.1");
     explicit InetAddress(const sockaddr_in&addr);
     ~InetAddress();
 
@@ -21,6 +21,6 @@ public:
     std::string toIpPort()const;
     uint16_t toPort()const;
 
-    sockaddr_in* getSockAddr();
+    const sockaddr_in* getSockAddr()const;
 };
 
