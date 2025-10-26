@@ -45,7 +45,7 @@ int Socket::accept(InetAddress& peer_addr)
     ::memset(&addr,0,sizeof(addr));
 
     //这里设置接收的连接为非阻塞读写和在执行exec函数时关闭
-    int connfd = accept4(socketfd_,(sockaddr*)&addr,&len,SOCK_CLOEXEC|SOCK_CLOEXEC);
+    int connfd = accept4(socketfd_,(sockaddr*)&addr,&len,SOCK_NONBLOCK|SOCK_CLOEXEC);
 
     if(connfd>=0)
     {

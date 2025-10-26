@@ -5,7 +5,7 @@
 
 TEST(InetAddressTest,BaseTest)
 {
-    InetAddress ia("127.0.0.2",9999);
+    InetAddress ia(9999,"127.0.0.2");
     InetAddress ia2=ia;
     
     auto addr=ia.getSockAddr();

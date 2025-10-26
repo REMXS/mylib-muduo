@@ -55,9 +55,9 @@ public:
     
     std::string retrieveAllAsString();
 
-    size_t readableBytes(){return write_index_-read_index_;}//可读的空间
-    size_t writeableBytes(){return buffer_.size()-write_index_;}//可写的空间
-    size_t prependableBytes(){return write_index_;}//可读空间前的空间的大小
+    size_t readableBytes()const {return write_index_-read_index_;}//可读的空间
+    size_t writeableBytes()const {return buffer_.size()-write_index_;}//可写的空间
+    size_t prependableBytes()const {return read_index_;}//可读空间前的空间的大小
 
     //向可写的空间写入字符串
     void append(const char* str,size_t len);

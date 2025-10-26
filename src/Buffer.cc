@@ -7,8 +7,8 @@
 #include"Buffer.h"
 
 
-explicit Buffer::Buffer(size_t initial_size=kInitialSize)
-    :buffer_(kInitialSize)
+Buffer::Buffer(size_t initial_size)
+    :buffer_(kCheapPrepend+initial_size)
     ,read_index_(kCheapPrepend)
     ,write_index_(kCheapPrepend)
 {
@@ -53,7 +53,7 @@ ssize_t Buffer::readFd(int fd,int& error)
     {
         error=errno;
     }
-    else if(n<writeable)
+    else if(n<=writeable)
     {
         write_index_+=n;
     }
@@ -66,6 +66,7 @@ ssize_t Buffer::readFd(int fd,int& error)
     return n;
 }
 
+//这里只向内核写入数据，但是不去更新buffer的状态，因为如果应用层可能进行一些重复发送等再次使用到已发送数据的操作
 ssize_t Buffer::writeFd(int fd,int& error)
 {
     ssize_t n=write(fd,begin()+read_index_,readableBytes());
