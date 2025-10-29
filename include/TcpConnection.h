@@ -84,13 +84,14 @@ private:
 
 
 public:
-    constexpr static int DefaultWaterMark = 64 * 1024 * 1024; //默认为64mb
+    constexpr static size_t DefaultWaterMark = 64 * 1024 * 1024; //默认为64mb
 
     TcpConnection(EventLoop* loop,
                 const std::string&name,
                 int sockfd,
                 const InetAddress& local_addr,
-                const InetAddress& peer_addr);
+                const InetAddress& peer_addr,
+                size_t water_mark=DefaultWaterMark);
     ~TcpConnection();
 
     EventLoop* getLoop()const {return loop_;}
@@ -114,6 +115,13 @@ public:
     void connectionEstablished();
     //连接销毁
     void connectionDestroyed();
+
+
+    //测试使用
+    int getState()
+    {
+        return state_.load();
+    }
 
 };
 

@@ -3,7 +3,7 @@
 #include "gtest/gtest.h"
 #include "EventLoop.h"
 #include "EventLoopThreadPool.h"
-#include "CurrentThread.h" // 假设你有这个文件来获取线程ID
+#include "CurrentThread.h" 
 #include"Logger.h"
 #include <memory>
 #include <vector>

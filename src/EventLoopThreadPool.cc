@@ -27,6 +27,7 @@ void EventLoopThreadPool::setNumThreads(int num_threads)
 }
 
 
+//开启所有的subloop，如果只有baseloop，则只执行回调函数
 void EventLoopThreadPool::start(const ThreadInitCallback& cb)
 {
     started_=true;

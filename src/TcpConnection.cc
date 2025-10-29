@@ -32,7 +32,8 @@ TcpConnection::TcpConnection(EventLoop* loop,
             const std::string&name,
             int sockfd,
             const InetAddress& local_addr,
-            const InetAddress& peer_addr)
+            const InetAddress& peer_addr,
+            size_t water_mark)
     :state_(kConnecting)
     ,reading_(false)
     ,loop_(loop)
@@ -40,14 +41,14 @@ TcpConnection::TcpConnection(EventLoop* loop,
     ,channel_(std::make_unique<Channel>(loop,sockfd))
     ,local_addr_(local_addr)
     ,peer_addr_(peer_addr)
-    ,high_water_mark_(DefaultWaterMark)
+    ,high_water_mark_(water_mark)
 {
     channel_->setCloseCallback([this](){handleClose();});
     channel_->setErrorCallback([this](){handleError();});
     channel_->setReadCallback([this](Timestamp receive_time){handleRead(receive_time);});
     channel_->setWriteCallback([this](){handleWrite();});
 
-    LOG_INFO("new TCP connection created, name=%s, fd=%d",name_,sockfd)
+    LOG_INFO("new TCP connection created, name=%s, fd=%d",name_.c_str(),sockfd)
 
     socket_->setKeepAlive(true);
 }
@@ -55,7 +56,7 @@ TcpConnection::TcpConnection(EventLoop* loop,
 
 TcpConnection::~TcpConnection()
 {
-    LOG_INFO("TCP connection destroyed, name=%s, fd=%d, state=%d",name_,socket_->fd(),state_)
+    LOG_INFO("TCP connection destroyed, name=%s, fd=%d, state=%d",name_.c_str(),socket_->fd(),state_.load())
 }
 
 
@@ -64,7 +65,7 @@ void TcpConnection::shutdown()
 {
     if(state_==kConnected)
     {
-        setState(kDisConnecting);
+        setState(kDisConnected);
         /*
         在对应的loop的doing pending functor 阶段中半关闭连接，
         避免在channel执行写回调时同时关闭写端导致错误 
@@ -75,10 +76,103 @@ void TcpConnection::shutdown()
 
 void TcpConnection::send(const std::string& data)
 {
+    if(state_==kConnected)
+    {
+        /*
+        如果是loop是在当前线程中，比如在回调函数中执行心跳回复
+        等简单的纯内存操作的时候，就会触发这个条件，从而使延迟降到
+        最低，如果不进行条件判断直接加到loop的任务队列中就有点得不偿失了
+        */
+        if(loop_->isInLoopThread())
+        {
+            sendInLoop(data.c_str(),data.size());
+        }
+        else
+        {
+            loop_->runInLoop([this,&data](){sendInLoop(data.c_str(),data.size());});
+        }
+    }
+    else
+    {
+        LOG_ERROR("%s not connected",__FUNCTION__)
+    }
+}
+
+void TcpConnection::sendInLoop(const void* data,size_t len)
+{
+    ssize_t nwrote=0; //发送字节数
+    size_t remaining=len; //剩余字节数
+    bool fault_error=false; 
+
+    //状态为kDisConnected表明调用过shutDownWrite关闭了写端或者是连接即将关闭，不能再进行发送了
+    if(state_==kDisConnected)
+    {
+        LOG_ERROR("disconnected, give up writing")
+    }
+
+    //如果channel的写事件没有被监听并且输出缓冲区中没有数据，则可以直接发送数据
+    if(!channel_->isWriting()&&output_buffer_.readableBytes()==0)
+    {
+        nwrote=::write(channel_->fd(),data,len);
+
+        if(nwrote>=0)
+        {
+            remaining-=nwrote;
+
+            //如果全部数据发送完毕，则执行响应的回调函数
+            if(remaining==0&&write_complete_callback_)
+            {
+                loop_->queueInLoop([this](){write_complete_callback_(shared_from_this());});
+            }
+        }
+        else
+        {
+            nwrote=0;
+            if(errno!=EWOULDBLOCK)
+            {
+                LOG_ERROR("%s error happend",__FUNCTION__)
+
+                if(errno==EPIPE||errno==ECONNRESET) // sigpipe received, connection reset
+                {
+                    fault_error=true;
+                }
+            }
+        }
+    }
+
+    /*
+    如果有剩余的数据没有发送或者是在输出缓冲区中还有数据，则在输出缓冲区中追加数据
+    如果原先输出缓冲区中没有数据，启用channel的写事件监听（向poller注册写事件，然后等待poller返回EPOLLOUT）
+    等poller返回epollout之后，执行hanlewrite回调函数，将输出缓冲区中剩余的数据发送出去
+    */
+    if(!fault_error&&remaining)
+    {
+        size_t old_len=output_buffer_.readableBytes();
+        //在追加之前要判断输出缓冲区中的数据是否超过high water mark，决定是否要执行响应的回调函数
+        if(old_len+remaining>=high_water_mark_&&old_len<high_water_mark_&&high_water_mark_callback_)
+        {
+            loop_->queueInLoop([this](){high_water_mark_callback_(shared_from_this());});
+        }
+
+        output_buffer_.append((char*)data+nwrote,remaining);
+
+        //如果之前输出缓冲区中没有数据，现在有数据了，启用poller监听写事件
+        if(!channel_->isWriting())
+        {
+            channel_->enableWriting();
+        }
+    }
+}
+
+
+void TcpConnection::sendFile(int file_descriptor,off_t offset,size_t count)
+{
 
 }
 
-void TcpConnection::sendFile(int file_descriptor,off_t offset,size_t count)
+
+
+void TcpConnection::sendFileInLoop(int file_descriptor,off_t offset,size_t count)
 {
 
 }
@@ -150,7 +244,7 @@ void TcpConnection::handleWrite()
     if(channel_->isWriting())
     {
         int saved_err=0;
-        ssize_t n=input_buffer_.writeFd(channel_->fd(),saved_err);
+        ssize_t n=output_buffer_.writeFd(channel_->fd(),saved_err);
         if(n>0)
         {
             output_buffer_.retrieve(n);
@@ -178,7 +272,7 @@ void TcpConnection::handleWrite()
         }
         else
         {
-            LOG_ERROR("%s connection fd=%d write error",__FUNCTION__,channel_->fd())
+            LOG_ERROR("%s connection fd=%d write error:%d",__FUNCTION__,channel_->fd(),saved_err)
         }
     }
     else
@@ -231,12 +325,4 @@ void TcpConnection::shutDownInLoop()
     }
 }
 
-void TcpConnection::sendInLoop(const void* data,size_t len)
-{
 
-}
-
-void TcpConnection::sendFileInLoop(int file_descriptor,off_t offset,size_t count)
-{
-
-}
