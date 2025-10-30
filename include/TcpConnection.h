@@ -69,6 +69,15 @@ private:
 
     const std::string name_;
 
+    //是否在发送文件
+    bool sending_file;
+    //如果发送文件一次性没有发完，则使用这个变量存储要发送的文件相关信息以便在handlewrite中发送
+    struct{
+        int fd_to_send_;
+        off_t fd_offset_;
+        size_t count_;
+    }file_to_send;
+
 
     void setState(StateE state){state_=state;}//设置状态
 

@@ -42,6 +42,7 @@ TcpConnection::TcpConnection(EventLoop* loop,
     ,local_addr_(local_addr)
     ,peer_addr_(peer_addr)
     ,high_water_mark_(water_mark)
+    ,sending_file(false)
 {
     channel_->setCloseCallback([this](){handleClose();});
     channel_->setErrorCallback([this](){handleError();});
@@ -65,7 +66,7 @@ void TcpConnection::shutdown()
 {
     if(state_==kConnected)
     {
-        setState(kDisConnected);
+        setState(kDisConnecting);
         /*
         在对应的loop的doing pending functor 阶段中半关闭连接，
         避免在channel执行写回调时同时关闭写端导致错误 
@@ -167,13 +168,38 @@ void TcpConnection::sendInLoop(const void* data,size_t len)
 
 void TcpConnection::sendFile(int file_descriptor,off_t offset,size_t count)
 {
-
+    if(state_==kConnected)
+    {
+        if(loop_->isInLoopThread())
+        {
+            sendFileInLoop(file_descriptor,offset,count);
+        }
+        else
+        {
+            loop_->queueInLoop([file_descriptor,offset,count,this](){sendFileInLoop(file_descriptor,offset,count);});
+        }
+    }
+    else
+    {
+        LOG_ERROR("%s fd=%d not connect",__FUNCTION__,channel_->fd())
+    }
 }
 
 
 
 void TcpConnection::sendFileInLoop(int file_descriptor,off_t offset,size_t count)
 {
+    if(state_==kDisConnected||state_==kDisConnecting)
+    {
+        LOG_ERROR("%s connection fd=%d is down, give up sending",__FUNCTION__,socket_->fd())
+    }
+
+    ssize_t bytes_send=0;
+
+
+
+
+
 
 }
 
@@ -197,7 +223,7 @@ void TcpConnection::connectionEstablished()
 
 void TcpConnection::connectionDestroyed()
 {
-    if(state_==kConnected)
+    if(state_==kConnected||state_==kDisConnecting)
     {
         setState(kDisConnected);
         channel_->disableAll(); //将channel在poller中注册的监听事件都取消

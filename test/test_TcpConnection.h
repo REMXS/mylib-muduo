@@ -102,41 +102,46 @@ TEST_F(TcpConnectionTest,TestChannelCallback)
     int close_cnt=0; //1
     int message_cnt=0; //1
 
-    std::string data="hello world";
+    int expect_cnt=7;
+
+    std::string data="hello";
 
     //设置回调函数
     conn->setCloseCallback([&](const TcpConnectionPtr&){
         close_cnt++;
         cnt++;
-        if(cnt==6) cv.notify_one();
+        if(cnt==expect_cnt) cv.notify_one();
     });
     conn->setConnecitonCallback([&](const TcpConnectionPtr&){
         conn_cnt++;
         cnt++;
-        if(cnt==6) cv.notify_one();
+        if(cnt==expect_cnt) cv.notify_one();
     });
     conn->setHighWaterMarkCallback([&](const TcpConnectionPtr&){
         water_mark_cnt++;
         cnt++;
-        if(cnt==6) cv.notify_one();
+        if(cnt==expect_cnt) cv.notify_one();
     });
     conn->setMessageCallback([&](const TcpConnectionPtr&,Buffer*buf,Timestamp){
         ASSERT_EQ(buf->retrieveAllAsString(),data);
         message_cnt++;
         cnt++;
-        if(cnt==6) cv.notify_one();
+        if(cnt==expect_cnt) cv.notify_one();
     });
     conn->setWriteCompleteCallback([&](const TcpConnectionPtr&){
         write_complete_cnt++;
         cnt++;
-        if(cnt==6) cv.notify_one();
+        if(cnt==expect_cnt) cv.notify_one();
     });
 
     //正式建立连接
     conn->connectionEstablished();
 
-    //发送数据 16mb
-    std::string large_message(4096*1024*4,'A');
+    //发送小数据
+    conn->send(data);
+
+    //发送大数据
+    std::string large_message(4096*64*4,'A');
     conn->send(large_message);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -151,31 +156,75 @@ TEST_F(TcpConnectionTest,TestChannelCallback)
     char buf[4096]={0};
     while((n=::read(sv[1],buf,sizeof(buf)))!=-1)
     {
-        std::this_thread::sleep_for(std::chrono::nanoseconds(200));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
         ncnt+=n;
     }
     if (n < 0 && (errno != EAGAIN && errno != EWOULDBLOCK)) {
         perror("read error");
     }
-    ASSERT_EQ(ncnt,large_message.size());
+    ASSERT_EQ(ncnt,large_message.size()+data.size());
 
     ::close(sv[1]);
 
     {
         std::unique_lock<std::mutex>lock(mtx);
         cv.wait(lock,[&](){
-            return cnt==6;
+            return cnt==expect_cnt;
         });
     }
 
     conn->connectionDestroyed();
     
     ASSERT_EQ(conn_cnt,2);
-    ASSERT_EQ(write_complete_cnt,1);
+    ASSERT_EQ(write_complete_cnt,2);
     ASSERT_EQ(water_mark_cnt,1);
     ASSERT_EQ(close_cnt,1);
     ASSERT_EQ(message_cnt,1);
     
+}
+
+
+TEST_F(TcpConnectionTest,TestShutDown)
+{
+    conn->shutdown();
+    ASSERT_EQ(conn->getState(),kConnecting);
+
+    conn->connectionEstablished();
+
+
+    //发送大数据
+    std::string large_message(4096*64*4,'A');
+    conn->send(large_message);
+
+    conn->shutdown();
+    ASSERT_EQ(conn->getState(),kDisConnecting);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+
+    //测试WriteCompleteCallback
+    int n=0;
+    char buf[4096]={0};
+
+    
+    /*
+    read 返回 0：对端已关闭写端或文件到达 EOF。
+    read 返回 -1 且 errno=EAGAIN/EWOULDBLOCK：非阻塞模式下当前无数据可读，后续仍可再尝试。
+    */
+    //返回 0 表示对端已关闭写端，EOF 会一直返回 0，所以这里的while不能与上一个条件相同
+    while((n=::read(sv[1],buf,sizeof(buf)))>0)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    if (n == 0) {
+        // EOF
+    } else if (n < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
+        perror("read error");
+    }
+
+
+    conn->connectionDestroyed();
+    ASSERT_EQ(conn->getState(),kDisConnected);
 }
 
 
