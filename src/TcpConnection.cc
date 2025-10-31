@@ -105,10 +105,12 @@ void TcpConnection::sendInLoop(const void* data,size_t len)
     size_t remaining=len; //剩余字节数
     bool fault_error=false; 
 
-    //状态为kDisConnected表明调用过shutDownWrite关闭了写端或者是连接即将关闭，不能再进行发送了
-    if(state_==kDisConnected)
+    //状态为kDisConnected表明连接已经关闭，不接受一切发送读取事件
+    //状态为kDisConnecting表示正在关闭连接，不接受新的发送请求了
+    if(state_==kDisConnected||state_==kDisConnecting)
     {
-        LOG_ERROR("disconnected, give up writing")
+        LOG_ERROR("%s fd=%d disconnected, give up writing",__FUNCTION__,socket_->fd())
+        return;
     }
 
     //如果channel的写事件没有被监听并且输出缓冲区中没有数据，则可以直接发送数据
@@ -170,13 +172,18 @@ void TcpConnection::sendFile(int file_descriptor,off_t offset,size_t count)
 {
     if(state_==kConnected)
     {
+        sending_file=true;
+        file_to_send.fd_to_send_=file_descriptor;
+        file_to_send.fd_offset_=offset;
+        file_to_send.count_=count;
+
         if(loop_->isInLoopThread())
         {
-            sendFileInLoop(file_descriptor,offset,count);
+            sendFileInLoop();
         }
         else
         {
-            loop_->queueInLoop([file_descriptor,offset,count,this](){sendFileInLoop(file_descriptor,offset,count);});
+            loop_->queueInLoop([this](){sendFileInLoop();});
         }
     }
     else
@@ -187,20 +194,71 @@ void TcpConnection::sendFile(int file_descriptor,off_t offset,size_t count)
 
 
 
-void TcpConnection::sendFileInLoop(int file_descriptor,off_t offset,size_t count)
+void TcpConnection::sendFileInLoop()
 {
     if(state_==kDisConnected||state_==kDisConnecting)
     {
         LOG_ERROR("%s connection fd=%d is down, give up sending",__FUNCTION__,socket_->fd())
+        sending_file=false;
+        return;
     }
 
-    ssize_t bytes_send=0;
+    ssize_t bytes_send=0; //发送了多少数据
+    size_t remaining=file_to_send.count_; //还有多少数据要发送
+    bool fault_error=false; //出现的错误
+    
+    if(sending_file)
+    {
+        bytes_send=::sendfile(channel_->fd(),file_to_send.fd_to_send_,&file_to_send.fd_offset_,remaining);
+        if(bytes_send>=0)
+        {
+            remaining-=bytes_send;
+            //如果文件发送完毕，则关闭文件发送标志,关闭监听写事件
+            if(remaining==0)
+            {
+                //如果有相应的回调函数，则执行相应的回调函数
+                if(write_complete_callback_)
+                {
+                    loop_->queueInLoop([this](){write_complete_callback_(shared_from_this());});
+                }
+                sending_file=false;
+                channel_->disableWriting();   
+            }
+        }
+        else
+        {
+            bytes_send=0;
+            if(errno!=EWOULDBLOCK)
+            {
+                LOG_ERROR("%s error happened",__FUNCTION__)
+            }
+            //连接关闭，停止发送
+            if(errno== EPIPE||errno==ECONNRESET)
+            {
+                fault_error=true;
+                sending_file=false;
+                /*
+                这里通常不需要对epoll监听事件进行处理，因为如果有错误会返回执行handleError
+                if(channel_->isWriting())
+                {
+                    channel_->disableWriting();
+                } */
+            }
+        }
+    }
 
-
-
-
-
-
+    /*
+    如果有剩余的数据，更新发送状态，继续发送
+    如果一次发送没有发送完毕，则打开写事件监听，继续发送
+    */
+    if(remaining&&!fault_error)
+    {
+        file_to_send.count_=remaining;
+        if(!channel_->isWriting())
+        {
+            channel_->enableWriting();
+        }
+    }
 }
 
 
@@ -238,7 +296,7 @@ void TcpConnection::connectionDestroyed()
     channel_->remove(); //把channel从poller中删除
 }
 
-
+//EPOLLHUP 通常伴随 EPOLLIN（因为有 EOF 可读）
 void TcpConnection::handleRead(Timestamp receive_time)
 {
     int saved_err=0;
@@ -249,7 +307,7 @@ void TcpConnection::handleRead(Timestamp receive_time)
         if(message_callback_)
         {
             //执行应用层设置的回调函数来读取处理数据
-            //处于性能考虑，这里没有将回调函数加入到loop中的任务队列中执行
+            //处于性能和延迟考虑，这里没有将回调函数加入到loop中的任务队列中执行
             message_callback_(shared_from_this(),&input_buffer_,receive_time);
         }
     }
@@ -267,7 +325,7 @@ void TcpConnection::handleRead(Timestamp receive_time)
 
 void TcpConnection::handleWrite()
 {
-    if(channel_->isWriting())
+    if(channel_->isWriting()&&!sending_file)
     {
         int saved_err=0;
         ssize_t n=output_buffer_.writeFd(channel_->fd(),saved_err);
@@ -300,6 +358,10 @@ void TcpConnection::handleWrite()
         {
             LOG_ERROR("%s connection fd=%d write error:%d",__FUNCTION__,channel_->fd(),saved_err)
         }
+    }
+    else if(channel_->isWriting()&&sending_file)
+    {
+        sendFileInLoop();
     }
     else
     {
@@ -340,6 +402,9 @@ void TcpConnection::handleError()
         err=errno;
     }
     LOG_ERROR("%s connection fd=%d name=%s error happen ,errno=%d",__FUNCTION__,channel_->fd(),name_.c_str(),err)
+    
+    //关闭连接
+    handleClose();
 }
 
 void TcpConnection::shutDownInLoop()

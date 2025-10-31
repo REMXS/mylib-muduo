@@ -10,6 +10,8 @@
 #include <vector>
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include <sys/stat.h> //获取文件大小
+#include <signal.h>
 
 
 #include "gtest/gtest.h"
@@ -195,9 +197,13 @@ TEST_F(TcpConnectionTest,TestShutDown)
     //发送大数据
     std::string large_message(4096*64*4,'A');
     conn->send(large_message);
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
 
     conn->shutdown();
     ASSERT_EQ(conn->getState(),kDisConnecting);
+
+    conn->send("hello");
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
@@ -225,6 +231,50 @@ TEST_F(TcpConnectionTest,TestShutDown)
 
     conn->connectionDestroyed();
     ASSERT_EQ(conn->getState(),kDisConnected);
+}
+
+
+TEST_F(TcpConnectionTest,SendFileTest)
+{
+    const char* file_name="../test/WW_win95_v004_light_post.png";
+    FILE* fp=fopen(file_name,"r");
+    int fd=fileno(fp);
+    
+    struct stat st;
+    int tem=::stat(file_name,&st);
+    ASSERT_EQ(tem,0);
+
+    off_t file_size=st.st_size;
+
+    conn->connectionEstablished();
+    //发送文件
+    conn->sendFile(fd,0,static_cast<size_t>(file_size));
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+
+    //接收文件
+    long n=0;
+    long cnt=0;
+    char buf[8192]={0};
+    while((n=::read(sv[1],buf,sizeof(buf)))>0)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        cnt+=n;
+    }
+    if (n == 0) {
+        // EOF
+    } else if (n < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
+        perror("read error");
+    }
+
+    ASSERT_EQ(cnt,file_size);
+
+    fclose(fp);
+
+    ASSERT_EQ(conn->getState(),kConnected);
+
+    conn->connectionDestroyed();
 }
 
 

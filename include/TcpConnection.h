@@ -88,7 +88,7 @@ private:
 
     void shutDownInLoop();//具体执行
     void sendInLoop(const void* data,size_t len);//具体执行发送数据的函数
-    void sendFileInLoop(int file_descriptor,off_t offset,size_t count);//具体执行发送文件的函数
+    void sendFileInLoop();//具体执行发送文件的函数
 
 
 
