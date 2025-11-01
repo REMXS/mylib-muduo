@@ -24,6 +24,7 @@
 #include"InetAddress.h"
 #include "Channel.h"
 
+//数据和文件不能交替发送，一个连接只能处理数据或一个文件
 
 class TcpConnectionTest: public ::testing::Test
 {   

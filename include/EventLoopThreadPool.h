@@ -13,7 +13,7 @@
 class EventLoopThread;
 class EventLoop;
 
-class EventLoopThreadPool
+class EventLoopThreadPool: noncopyable
 {
 public:
     using ThreadInitCallback=std::function<void(EventLoop*)>;

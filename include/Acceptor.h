@@ -31,7 +31,8 @@ public:
     Acceptor(EventLoop*loop,const InetAddress&addr,bool reuse);
     ~Acceptor();
 
-    void listen(); //设置listenfd的listen状态
+    //设置listenfd的listen状态,并将其加入poller中进行监听
+    void listen(); 
     bool isListening(){return listening_;}
 
     void setConnetionCallback(NewConnectionCallBack cb){connection_callback_=std::move(cb);}

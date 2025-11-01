@@ -42,6 +42,7 @@ TcpConnection::TcpConnection(EventLoop* loop,
     ,local_addr_(local_addr)
     ,peer_addr_(peer_addr)
     ,high_water_mark_(water_mark)
+    ,name_(name)
     ,sending_file(false)
 {
     channel_->setCloseCallback([this](){handleClose();});
