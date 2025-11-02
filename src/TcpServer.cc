@@ -79,10 +79,11 @@ void TcpServer::newConnection(int sock_fd, InetAddress const &peer_addr)
     {
         LOG_ERROR("%s fd=%d failed to get local ip port",__FUNCTION__,sock_fd)
     }
+    InetAddress local_a(local_addr);
 
     
     //建立新连接
-    TcpConnectionPtr new_conn=std::make_shared<TcpConnection>(ioloop,conn_name,sock_fd,local_addr,peer_addr);
+    TcpConnectionPtr new_conn=std::make_shared<TcpConnection>(ioloop,conn_name,sock_fd,local_a,peer_addr);
     
     //绑定回调函数
     new_conn->setCloseCallback([this](const TcpConnectionPtr&conn){removeConnection(conn);});
@@ -90,6 +91,9 @@ void TcpServer::newConnection(int sock_fd, InetAddress const &peer_addr)
     new_conn->setConnecitonCallback(connection_callback_);
     new_conn->setMessageCallback(message_callback_);
     new_conn->setWriteCompleteCallback(write_complete_callback_);
+    
+    //将新连接加入到server的表中
+    connection_map_[conn_name]=new_conn;
 
     //让对应的loop启动这个连接
     ioloop->queueInLoop([conn=new_conn](){conn->connectionEstablished();});

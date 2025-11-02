@@ -7,13 +7,15 @@
 //#include"test_Socket.h"
 //#include"test_Buffer.h"
 
-#include"test_TcpConnection.h"
+//#include"test_TcpConnection.h"
+
 // #if defined(__linux__)
 //     #include<sys/epoll.h>
 // #elif defined(__APPLE__)
 //     #include<sys/sysctl.h>
 // #endif
 
+#include "Intergration_test.h"
 
 int main(int argc,char**argv){
     struct sigaction sa;

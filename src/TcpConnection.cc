@@ -102,6 +102,7 @@ void TcpConnection::send(const std::string& data)
 
 void TcpConnection::sendInLoop(const void* data,size_t len)
 {
+    LOG_DEBUG("%s datalen=%lu",__FUNCTION__,len)
     ssize_t nwrote=0; //发送字节数
     size_t remaining=len; //剩余字节数
     bool fault_error=false; 
