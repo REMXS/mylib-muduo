@@ -327,7 +327,8 @@ void TcpConnection::handleRead(Timestamp receive_time)
 
 void TcpConnection::handleWrite()
 {
-    if(channel_->isWriting()&&!sending_file)
+    //如果正在监听写事件并且输出缓冲区中有数据，则先发送输出缓冲区中的数据
+    if(channel_->isWriting()&&output_buffer_.readableBytes())
     {
         int saved_err=0;
         ssize_t n=output_buffer_.writeFd(channel_->fd(),saved_err);
