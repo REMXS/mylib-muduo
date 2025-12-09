@@ -1,6 +1,7 @@
 #pragma once
 
 #include<iostream>
+#include<gtest/gtest.h>
 #include"Timestamp.h"
 
 // #if defined(__linux__)
@@ -9,19 +10,36 @@
 //     #include<sys/sysctl.h>
 // #endif
 
-void test_Timestamp(){
-    std::cout<<"start test Timestamp"<<std::endl;
+TEST(TimestampTest, Basic){
     Timestamp ts;
     ts=Timestamp::now();
+    EXPECT_NEAR(0,time(NULL)-ts.microSecondsSinceEpoch(),1);
     Timestamp ts2(ts);
     Timestamp ts3(time(NULL));
 
     Timestamp ts4=ts3;
     ts4=ts3;
-    std::cout<<ts.to_string()<<std::endl;
-    std::cout<<ts2.to_string()<<std::endl;
-    std::cout<<ts3.to_string()<<std::endl;
-    std::cout<<ts4.to_string()<<std::endl;
+    EXPECT_EQ(ts3,ts4);
+}
 
+TEST(TimestampTest, ToString){
+    Timestamp ts(Timestamp::now());
+    std::string str=ts.to_string();
+    std::cout<<str<<std::endl;
+}
 
+TEST(TimestampTest, Comparison){
+    Timestamp ts1(1000);
+    Timestamp ts2(2000);
+    EXPECT_LT(ts1,ts2);
+    EXPECT_GT(ts2,ts1);
+    EXPECT_NE(ts1,ts2);
+    EXPECT_EQ(ts1,ts1);
+}
+TEST(TimestampTest,addTime_test)
+{
+    Timestamp ts1(1000000); // 1 second
+    double secondsToAdd = 2.5; // 2.5 seconds
+    Timestamp ts2 = addTime(ts1, secondsToAdd);
+    EXPECT_EQ(ts2.microSecondsSinceEpoch(), 3500000); // 3.5 seconds in microseconds
 }

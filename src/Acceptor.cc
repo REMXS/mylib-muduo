@@ -29,7 +29,7 @@ Acceptor::Acceptor(EventLoop*loop,const InetAddress&addr,bool reuse)
     accept_socket_.setReusePort(reuse);
     accept_socket_.bindAddress(addr);
     accept_channel_.setReadCallback([this](Timestamp){
-        this->handRead();
+        this->handleRead();
     });
 }
 
@@ -48,7 +48,7 @@ void Acceptor::listen()
 }
 
 
-void Acceptor::handRead()
+void Acceptor::handleRead()
 {
     InetAddress addr;
     int connfd=accept_socket_.accept(addr);

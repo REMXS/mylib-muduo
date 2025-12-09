@@ -21,7 +21,7 @@ Socket::~Socket()
 
 void Socket::listen()
 {
-    if(::listen(socketfd_,1024)!=0)
+    if(::listen(socketfd_,1024*16)!=0)
     {
         LOG_FATAL("listen socket fd %d failed",socketfd_)
     }

@@ -12,11 +12,11 @@
 #include"Thread.h"
 
 
-std::future<void> test_thread_func()
+std::future<bool> test_thread_func()
 {   
     //shared_ptr默认构造函数不会创建目标对象，所以不要忘了使用make_shared创建对象
-    std::shared_ptr<std::promise<void>>pr=std::make_shared<std::promise<void>>();
-    std::future<void>ret=pr->get_future();
+    std::shared_ptr<std::promise<bool>>pr=std::make_shared<std::promise<bool>>();
+    std::future<bool>ret=pr->get_future();
     /* std::promise 不可拷贝，只能移动，但 std::function 要求其目标可拷贝构造。
     当 lambda 捕获 std::promise（即使用 std::move）后，
     这个 lambda 变成了只能移动的类型，无法存储到 std::function 中。
@@ -24,18 +24,24 @@ std::future<void> test_thread_func()
     std::shared_ptr<Thread> t=std::make_shared<Thread>([pr]()->void {
         std::this_thread::sleep_for(std::chrono::seconds(2));
         std::cout<<"this is a function and after the object it belongs still alive"<<std::endl;
-        pr->set_value();
+        pr->set_value(true);
     },"my thread");
     t->start();
 
-    std::cout<<(t->isStarted()?"thread has started":"thread has not started")<<std::endl;
+    EXPECT_EQ(t->isStarted(),true);
     std::cout<<t->name()<<" "<<t->numCreated<<std::endl;
     return ret;
 }
 
 
+TEST(ThreadTest, BasicThreadFunction)
+{
+    std::future<bool>fu = std::move(test_thread_func());
+    fu.wait();
+    EXPECT_EQ(fu.get(),true);
+}
 
-TEST(ThreadDeathTest, JoinBeforeStart) {
+TEST(ThreadTest, JoinBeforeStart) {
     // EXPECT_DEATH 宏
     // 第一个参数：要执行的代码块
     // 第二个参数：一个正则表达式，用来匹配程序终止时输出到 stderr 的错误信息
@@ -46,10 +52,3 @@ TEST(ThreadDeathTest, JoinBeforeStart) {
 
 }
 
-void test_thread()
-{
-    auto fu=std::move(test_thread_func());
-    fu.wait();
-    ThreadDeathTest_JoinBeforeStart_Test tj;
-
-}

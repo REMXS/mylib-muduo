@@ -13,7 +13,7 @@ namespace CurrentThread
 
     inline int tid()
     {
-        //__builtin_expect 的意思是 告诉编译器t_cachedTid==0 的值很可能是false，这个是一项指导编译器优化
+        //__builtin_expect 的意思是 告诉编译器t_cachedTid==0 的值很可能是false，也就是t_cachedTid的值很可能不为0，这个是一项指导编译器优化
         if(__builtin_expect(t_cachedTid==0,0))
         {
             cacheTid();

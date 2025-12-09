@@ -25,7 +25,7 @@ private:
     NewConnectionCallBack connection_callback_;//用于处理新建立连接的函数
 
 
-    void handRead();//listenfd 的读回调函数
+    void handleRead();//listenfd 的读回调函数
 
 public:
     Acceptor(EventLoop*loop,const InetAddress&addr,bool reuse);

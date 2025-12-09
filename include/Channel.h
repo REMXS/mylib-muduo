@@ -8,6 +8,13 @@
 
 class EventLoop;
 
+/* 
+//以下为channel中index中的值的含义
+const int kNew=-1; //表示channel还没添加到channel中
+const int kAdd=1; //表示channel添加到了channel中被监听
+const int kDelete=2; //表示channel被监听的事件在epoll中被删除，但是channel在保留在channels_映射中,功能类似挂起 
+*/
+
 class Channel:noncopyable
 {
 public:

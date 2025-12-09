@@ -3,17 +3,14 @@
 
 Timestamp::Timestamp():microSecondsSinceEpoch_(0)
 {
-
 }
 
 Timestamp::Timestamp(int64_t microSecondsSinceEpoch):microSecondsSinceEpoch_(microSecondsSinceEpoch)
 {
-
 }
 
 Timestamp::Timestamp(const Timestamp& ts):microSecondsSinceEpoch_(ts.microSecondsSinceEpoch_)
 {
-
 }
 
 

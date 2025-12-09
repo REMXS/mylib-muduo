@@ -1,15 +1,12 @@
 
-add_executable(Test test.cc)
+find_package(GTest REQUIRED)
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(GTEST REQUIRED gtest_main)
+add_executable(Test)
+target_sources(Test PRIVATE test.cc)
 
 
 target_include_directories(Test PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
-target_link_libraries(Test PUBLIC mylib_copy_muduo)
+target_link_libraries(Test PRIVATE mylib_copy_muduo GTest::gtest GTest::gmock)
 
 
-
-target_compile_options(Test PRIVATE ${GTEST_CFLAGS})
-target_link_libraries(Test PRIVATE ${GTEST_LDFLAGS})
