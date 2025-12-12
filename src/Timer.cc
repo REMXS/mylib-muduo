@@ -1,6 +1,6 @@
 #include "Timer.h"
 
-void Timer::restart(Timestamp now)
+void Timer::restart(MonotonicTimestamp now)
 {
     if(repeat_)
     {
@@ -8,6 +8,6 @@ void Timer::restart(Timestamp now)
     }
     else
     {
-        expiration_ = Timestamp::invaild();
+        expiration_ = MonotonicTimestamp::invaild();
     }
 }

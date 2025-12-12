@@ -8,10 +8,14 @@
 
 #include"CurrentThread.h"
 #include"Timestamp.h"
+#include"MonotonicTimestamp.h"
 #include"noncopyable.h"
+#include"TimerId.h"
+#include"Callbacks.h"
 
 class Channel;
 class Poller;
+class TimerQueue;
 
 class EventLoop:noncopyable
 {
@@ -37,6 +41,7 @@ private:
     Timestamp pollReturnTime_; 
 
     std::unique_ptr<Poller>poller_;
+    std::unique_ptr<TimerQueue>timer_queue_;
 
 
     //用于跨线程唤醒操作
@@ -75,6 +80,14 @@ public:
     //判断此eventloop知否在当前线程中
     bool isInLoopThread(){return this->thread_id_==CurrentThread::tid();}
 
+    //在固定时间执行定时任务,注意when应当是相对时间
+    TimerId runAt(MonotonicTimestamp when,TimerCallback cb);
+    //在当前时间之后执行定时任务
+    TimerId runAfter(double delay,TimerCallback cb);
+    //执行重复触发的定时任务
+    TimerId runEveny(double interval,TimerCallback cb);
+    //取消定时任务
+    void cancel(TimerId timer_id);
 
     
     //eventloop 在初始化的时候会自动创建poller，所以此处不用传参数

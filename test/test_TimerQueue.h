@@ -34,7 +34,7 @@ TEST_F(TimerQueueTest, basic_timer)
     timer_queue->addTimer([&](){
         is_called=true;
         loop->quit();
-    },addTime(Timestamp::relativeTime(), 0.1),0);
+    },addTime(MonotonicTimestamp::now(), 0.1),0);
 
     loop->loop();
     EXPECT_TRUE(is_called);
@@ -50,7 +50,7 @@ TEST_F(TimerQueueTest, repeating_timer)
         {
             loop->quit();
         }
-    },addTime(Timestamp::relativeTime(), 0.1),0.1);
+    },addTime(MonotonicTimestamp::now(), 0.1),0.1);
 
     loop->loop();
     EXPECT_EQ(call_count,3);
@@ -63,13 +63,13 @@ TEST_F(TimerQueueTest, cancel_timer)
     bool should_be_called=false;
     TimerId timer_id = timer_queue->addTimer([&](){
         should_not_be_called=true;
-    },addTime(Timestamp::relativeTime(), 0.1),0);
+    },addTime(MonotonicTimestamp::now(), 0.1),0);
     timer_queue->cancelTimer(timer_id);
 
     timer_queue->addTimer([&](){
         should_be_called=true;
         loop->quit();
-    },addTime(Timestamp::relativeTime(), 0.2),0);
+    },addTime(MonotonicTimestamp::now(), 0.2),0);
 
     loop->loop();
     EXPECT_FALSE(should_not_be_called);
@@ -88,9 +88,9 @@ TEST_F(TimerQueueTest, cancel_during_callback)
             timer_queue->cancelTimer(timer_id);
             timer_queue->addTimer([&](){
                 loop->quit();
-            },addTime(Timestamp::relativeTime(), 0.1),0);
+            },addTime(MonotonicTimestamp::now(), 0.1),0);
         }
-    },addTime(Timestamp::relativeTime(), 0.1),0.1);
+    },addTime(MonotonicTimestamp::now(), 0.1),0.1);
     loop->loop();
     EXPECT_EQ(cnt,2);
 }
@@ -103,15 +103,15 @@ TEST_F(TimerQueueTest, multiple_timers_same_time)
         cnt++;
     };
 
-    TimerId timer_id1 = timer_queue->addTimer(timer_task,addTime(Timestamp::relativeTime(), 0.1),0);
-    timer_queue->addTimer(timer_task,addTime(Timestamp::relativeTime(), 0.1),0);
-    timer_queue->addTimer(timer_task,addTime(Timestamp::relativeTime(), 0.1),0);
-    timer_queue->addTimer(timer_task,addTime(Timestamp::relativeTime(), 0.1),0);
+    TimerId timer_id1 = timer_queue->addTimer(timer_task,addTime(MonotonicTimestamp::now(), 0.1),0);
+    timer_queue->addTimer(timer_task,addTime(MonotonicTimestamp::now(), 0.1),0);
+    timer_queue->addTimer(timer_task,addTime(MonotonicTimestamp::now(), 0.1),0);
+    timer_queue->addTimer(timer_task,addTime(MonotonicTimestamp::now(), 0.1),0);
     timer_queue->cancelTimer(timer_id1);
 
     timer_queue->addTimer([&](){
         loop->quit();
-    },addTime(Timestamp::relativeTime(), 0.2),0);
+    },addTime(MonotonicTimestamp::now(), 0.2),0);
 
     loop->loop();
     EXPECT_EQ(cnt,3);

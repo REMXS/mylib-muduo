@@ -34,13 +34,6 @@ Timestamp Timestamp::now()
     return Timestamp(us);
 }
 
-Timestamp Timestamp::relativeTime()
-{
-    auto now =std::chrono::steady_clock::now();
-    int64_t us = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
-    return Timestamp(us);
-}
-
 std::string Timestamp::to_string() const
 {
     char buf[128]={0};

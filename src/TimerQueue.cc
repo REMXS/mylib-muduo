@@ -20,9 +20,9 @@ int createTimerFd()
     return timer_fd;
 }
 
-struct timespec howMuchTimeFromNow(Timestamp when)
+struct timespec howMuchTimeFromNow(MonotonicTimestamp when)
 {
-    std::chrono::microseconds microseconds(when.microSecondsSinceEpoch() -Timestamp::relativeTime().microSecondsSinceEpoch());
+    std::chrono::microseconds microseconds(when.microSecondsSinceEpoch() -MonotonicTimestamp::now().microSecondsSinceEpoch());
     if(microseconds.count()<100)
     {
         microseconds=std::chrono::microseconds(100);
@@ -33,7 +33,7 @@ struct timespec howMuchTimeFromNow(Timestamp when)
     return ts;
 }
 
-void readTimerFd(int timer_fd,Timestamp now)
+void readTimerFd(int timer_fd,MonotonicTimestamp now)
 {
     int64_t res = 0;
     ssize_t n = ::read(timer_fd,&res,sizeof(res));
@@ -43,7 +43,7 @@ void readTimerFd(int timer_fd,Timestamp now)
     }
 }
 
-void resetTimerFd(int timer_fd,Timestamp expiration)
+void resetTimerFd(int timer_fd,MonotonicTimestamp expiration)
 {
     struct itimerspec old_value;
     struct itimerspec new_value;
@@ -74,7 +74,7 @@ TimerQueue::~TimerQueue()
 {
 }
 
-TimerId TimerQueue::addTimer(TimerCallback cb, Timestamp when, double interval)
+TimerId TimerQueue::addTimer(TimerCallback cb, MonotonicTimestamp when, double interval)
 {
     //创建timer对象
     Timer* raw_timer_ptr = new Timer(std::move(cb),when,interval);
@@ -125,7 +125,7 @@ void TimerQueue::handleRead()
 {
     assert(timer_list_.size()==active_timer_set_.size());
     //获取当前时间
-    Timestamp now(Timestamp::relativeTime());
+    MonotonicTimestamp now(MonotonicTimestamp::now());
     //读取timerfd防止重复触发
     readTimerFd(timer_fd,now);
     //获取所有过期的timer
@@ -146,7 +146,7 @@ void TimerQueue::handleRead()
     assert(timer_list_.size()==active_timer_set_.size());
 }
 
-std::vector<TimerQueue::Entry> TimerQueue::getExpiredTimers(Timestamp now)
+std::vector<TimerQueue::Entry> TimerQueue::getExpiredTimers(MonotonicTimestamp now)
 {
     assert(timer_list_.size()==active_timer_set_.size());
     std::vector<Entry>ret;
@@ -163,9 +163,9 @@ std::vector<TimerQueue::Entry> TimerQueue::getExpiredTimers(Timestamp now)
     return ret;
 }
 
-void TimerQueue::reset(const std::vector<Entry> expired_timers, Timestamp now)
+void TimerQueue::reset(const std::vector<Entry> expired_timers, MonotonicTimestamp now)
 {
-    Timestamp next_expiration;
+    MonotonicTimestamp next_expiration;
 
     for(auto&entry:expired_timers)
     {

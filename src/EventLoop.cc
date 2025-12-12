@@ -8,6 +8,7 @@
 #include"Logger.h"
 #include"Channel.h"
 #include"Poller.h"
+#include"TimerQueue.h"
 
 //防止一个线程创建多个eventloop
 //因为这个变量仅供内部判断使用，所以定义在实现文件，不对外暴露
@@ -41,6 +42,7 @@ EventLoop::EventLoop()
     ,quit_(false)
     ,thread_id_(CurrentThread::tid())
     ,poller_(Poller::newDefaultPoller(this))
+    ,timer_queue_(std::make_unique<TimerQueue>(this))
     ,calling_pending_functors_(false)
     ,wakeup_fd_(createEventFd())
     ,wakeup_channel(std::make_unique<Channel>(this,wakeup_fd_))
@@ -89,6 +91,25 @@ bool EventLoop::hasChannel(Channel* channel)
     return this->poller_->hasChannel(channel);
 }
 
+TimerId EventLoop::runAt(MonotonicTimestamp when, TimerCallback cb)
+{
+    return timer_queue_->addTimer(std::move(cb),when,0);
+}
+
+TimerId EventLoop::runAfter(double delay, TimerCallback cb)
+{
+    return timer_queue_->addTimer(std::move(cb),addTime(MonotonicTimestamp::now(),delay),0);
+}
+
+TimerId EventLoop::runEveny(double interval, TimerCallback cb)
+{
+    return timer_queue_->addTimer(std::move(cb),addTime(MonotonicTimestamp::now(),interval),interval);
+}
+
+void EventLoop::cancel(TimerId timer_id)
+{
+    timer_queue_->cancelTimer(timer_id);
+}
 
 void EventLoop::handleRead()
 {

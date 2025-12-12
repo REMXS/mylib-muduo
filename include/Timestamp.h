@@ -22,8 +22,6 @@ public:
 
     //获取当前时间
     static Timestamp now();
-    //返回相对时间
-    static Timestamp relativeTime();
     //返回空时间
     static Timestamp invaild(){return Timestamp();}
 

@@ -8,7 +8,7 @@ TEST(TimerTest, BasicTimer_test){
         called = true;
     };
 
-    Timestamp now = Timestamp::now();
+    MonotonicTimestamp now = MonotonicTimestamp::now();
     double interval = 0.1; // 100 milliseconds
     Timer timer(cb, addTime(now, interval), interval);
 
@@ -19,8 +19,8 @@ TEST(TimerTest, BasicTimer_test){
     timer.run();
     EXPECT_EQ(called, true);
 
-    Timestamp oldExpiration = timer.expiration();
-    timer.restart(Timestamp::now());
+    MonotonicTimestamp oldExpiration = timer.expiration();
+    timer.restart(MonotonicTimestamp::now());
     EXPECT_EQ(timer.expiration().microSecondsSinceEpoch() > oldExpiration.microSecondsSinceEpoch(), true);
 }
 TEST(TimerTest, OneShotTimer_test){
@@ -29,7 +29,7 @@ TEST(TimerTest, OneShotTimer_test){
         called = true;
     };
 
-    Timestamp now = Timestamp::now();
+    MonotonicTimestamp now = MonotonicTimestamp::now();
     double interval = 0.0; // One-shot timer
     Timer timer(cb, addTime(now, interval), interval);
 
@@ -40,6 +40,6 @@ TEST(TimerTest, OneShotTimer_test){
     timer.run();
     EXPECT_EQ(called, true);
 
-    timer.restart(Timestamp::now());
+    timer.restart(MonotonicTimestamp::now());
     EXPECT_EQ(timer.expiration().microSecondsSinceEpoch(), 0); // Should be invalid timestamp
 }

@@ -7,6 +7,7 @@
 #include "Channel.h"
 #include "noncopyable.h"
 #include "Callbacks.h"
+#include "MonotonicTimestamp.h"
 
 
 class EventLoop;
@@ -18,7 +19,7 @@ class TimerQueue: noncopyable
 {
 private:
     using TimerPtr = std::unique_ptr<Timer>;
-    using Entry = std::pair<Timestamp,int64_t>;
+    using Entry = std::pair<MonotonicTimestamp,int64_t>;
     using TimerList = std::map<Entry,TimerPtr>;
 
     using ActiveTimer = std::pair<Timer*,int64_t>;
@@ -41,9 +42,9 @@ private:
     void handleRead();
 
     //获取过期的定时器
-    std::vector<Entry>getExpiredTimers(Timestamp now);
+    std::vector<Entry>getExpiredTimers(MonotonicTimestamp now);
     //处理过期的定时器
-    void reset(const std::vector<Entry>expired_timers,Timestamp now);
+    void reset(const std::vector<Entry>expired_timers,MonotonicTimestamp now);
     //内部插入timer的具体实现
     bool insert(std::unique_ptr<Timer> timer);
     //内部删除timer的具体实现
@@ -54,7 +55,7 @@ public:
     explicit TimerQueue(EventLoop* loop);
     ~TimerQueue();
 
-    TimerId addTimer(TimerCallback cb,Timestamp when, double interval);
+    TimerId addTimer(TimerCallback cb,MonotonicTimestamp when, double interval);
     void cancelTimer(TimerId timer_id);
 };
 
