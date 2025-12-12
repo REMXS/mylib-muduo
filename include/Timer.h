@@ -29,9 +29,10 @@ public:
 
     Timestamp expiration()const {return expiration_;} 
     bool repeat()const {return repeat_;}    
-    void run()const {callback_();}
+    void run()const {if(callback_) callback_();}
+    int64_t sequence()const {return sequence_;}
 
-    void restart();
+    void restart(Timestamp now);
 
     static int64_t numCreated() {return s_global_sequence_.load();}     //返回当前创建的定时器的下一个编号
 

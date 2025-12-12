@@ -20,7 +20,7 @@ TEST(TimerTest, BasicTimer_test){
     EXPECT_EQ(called, true);
 
     Timestamp oldExpiration = timer.expiration();
-    timer.restart();
+    timer.restart(Timestamp::now());
     EXPECT_EQ(timer.expiration().microSecondsSinceEpoch() > oldExpiration.microSecondsSinceEpoch(), true);
 }
 TEST(TimerTest, OneShotTimer_test){
@@ -40,6 +40,6 @@ TEST(TimerTest, OneShotTimer_test){
     timer.run();
     EXPECT_EQ(called, true);
 
-    timer.restart();
+    timer.restart(Timestamp::now());
     EXPECT_EQ(timer.expiration().microSecondsSinceEpoch(), 0); // Should be invalid timestamp
 }

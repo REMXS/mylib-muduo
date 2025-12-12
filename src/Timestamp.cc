@@ -1,5 +1,6 @@
 #include "Timestamp.h"
-#include<time.h>
+#include <time.h>
+#include <chrono>
 
 Timestamp::Timestamp():microSecondsSinceEpoch_(0)
 {
@@ -28,13 +29,23 @@ Timestamp& Timestamp::operator=(const Timestamp& ts)
 
 Timestamp Timestamp::now()
 {
-    return Timestamp(time(NULL));
+    auto now =std::chrono::system_clock::now();
+    int64_t us = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
+    return Timestamp(us);
+}
+
+Timestamp Timestamp::relativeTime()
+{
+    auto now =std::chrono::steady_clock::now();
+    int64_t us = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
+    return Timestamp(us);
 }
 
 std::string Timestamp::to_string() const
 {
     char buf[128]={0};
-    tm* t= localtime(&this->microSecondsSinceEpoch_);
+    time_t seconds = microSecondsSinceEpoch_ / 1000000;  
+    tm* t = localtime(&seconds);
     //%02d 表示不足时用0填充
     snprintf(buf,128,"%4d/%02d/%02d %02d/%02d/%02d",
         t->tm_year+1900,

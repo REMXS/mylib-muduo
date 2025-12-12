@@ -1,10 +1,10 @@
 #include "Timer.h"
 
-void Timer::restart()
+void Timer::restart(Timestamp now)
 {
     if(repeat_)
     {
-        expiration_ = addTime(expiration_,interval_);
+        expiration_ = addTime(now,interval_);
     }
     else
     {
