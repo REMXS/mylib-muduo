@@ -13,7 +13,8 @@
 TEST(TimestampTest, Basic){
     Timestamp ts;
     ts=Timestamp::now();
-    EXPECT_NEAR(0,time(NULL)-ts.microSecondsSinceEpoch(),1);
+    EXPECT_NEAR(0,
+        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count()-ts.microSecondsSinceEpoch(),1);
     Timestamp ts2(ts);
     Timestamp ts3(time(NULL));
 
@@ -21,6 +22,7 @@ TEST(TimestampTest, Basic){
     ts4=ts3;
     EXPECT_EQ(ts3,ts4);
 }
+
 
 TEST(TimestampTest, ToString){
     Timestamp ts(Timestamp::now());
