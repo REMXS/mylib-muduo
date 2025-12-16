@@ -112,6 +112,7 @@ public:
 
     void shutdown();//半关闭连接
     void send(const std::string& data);//发送数据
+    void send(std::string&& data);
     void sendFile(int file_descriptor,off_t offset,size_t count);//发送文件
 
     void setConnecitonCallback(const ConnecitonCallback&cb){connection_callback_=cb;}

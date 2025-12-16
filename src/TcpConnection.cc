@@ -91,7 +91,31 @@ void TcpConnection::send(const std::string& data)
         }
         else
         {
-            loop_->runInLoop([this,&data](){sendInLoop(data.c_str(),data.size());});
+            loop_->runInLoop([this,data](){sendInLoop(data.c_str(),data.size());});
+        }
+    }
+    else
+    {
+        LOG_ERROR("%s not connected",__FUNCTION__)
+    }
+}
+
+void TcpConnection::send(std::string&& data)
+{
+    if(state_==kConnected)
+    {
+        /*
+        如果是loop是在当前线程中，比如在回调函数中执行心跳回复
+        等简单的纯内存操作的时候，就会触发这个条件，从而使延迟降到
+        最低，如果不进行条件判断直接加到loop的任务队列中就有点得不偿失了
+        */
+        if(loop_->isInLoopThread())
+        {
+            sendInLoop(data.c_str(),data.size());
+        }
+        else
+        {
+            loop_->runInLoop([this,data = std::move(data)](){sendInLoop(data.c_str(),data.size());});
         }
     }
     else
